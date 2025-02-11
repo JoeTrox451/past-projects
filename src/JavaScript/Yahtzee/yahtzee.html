@@ -1,0 +1,441 @@
+<html>
+<head>
+    <style>
+        .everything{
+            width: 600;
+            display:flex;
+            flex-direction: column;
+            align-items: center;
+            padding:20;
+            border-radius: 10px;
+            background-color: rgb(104, 15, 15);
+            margin:auto;
+        }
+        .body{
+            font-family: Geneva, Verdana, sans-serif;
+            background-color: rgb(8, 14, 34);
+        }
+        .title_img{
+            width:500; 
+            height:125; 
+            padding-left: 20; 
+            padding-bottom: 10;
+            filter:brightness(0.85)
+        }
+        .endgame{
+            position: absolute; 
+            margin-top: -30; 
+            color:gold; 
+            font-weight: bold; 
+            font-size: 15; 
+            width:480;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .die_con{
+            width: 600;
+            display:flex;
+            padding-bottom: 20;
+            justify-content: center;
+            background-color: rgb(175, 0, 0);
+        }
+        .die_num{
+            border-color: black;
+            border-style: solid;
+            border-radius: 10px;
+            padding:5px;
+            background-color: antiquewhite; 
+            width: 100; 
+            height: 100;
+            text-align: center; 
+            display: inline-block;
+        }
+        .die_img{
+            width: 50;
+            height: 50;
+            padding-bottom: 10;
+            padding-top: 10;
+        }
+        .score_num{
+            width: 600;
+            height: 40;
+            border-radius: 10px 10px 0px 0px;
+            justify-content: center;
+            display: flex;
+            font-size: 14;
+            background-color: gold;
+        }
+        .score_con{
+            width: 600;
+            height: 200;
+            background-color: rgb(175, 0, 0);
+            padding-top: 30;
+            text-align: center;
+            position: relative;
+        }
+        .score_side{
+            width: 600;
+            height: 100;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .score_div{
+            display: inline-block;
+            text-align: center;
+        }
+        .score_button{
+            width: 60;
+            height: 40;
+        }
+        .cat_num{
+            font-weight: bold;
+            color:gold;
+            margin:10;
+        }
+        .hold_butt{
+            padding-top: 3;
+            padding-left: 12;
+            padding-bottom: 3;
+            padding-right: 12;
+            font-family: Geneva, Verdana, sans-serif;
+        }
+        .roll_button{
+            width: 500;
+            height: 40;
+            border-radius: 5px;
+            margin-left: 50;
+            font-family: Geneva, Verdana, sans-serif;
+            font-size: large;
+            margin-bottom: 20;
+        }
+        .shadow{
+            box-shadow: 10px 10px 5px #310707;
+            border-radius: 10px;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body class="body">
+    <script>
+        /*const yaml = require('js-yaml');
+        const fs = require('fs');*/
+        class Die {
+            constructor(label) {
+                this.held = false;
+                this.sides = 6;
+                this.result = 1;
+                this.label = label;
+            }
+            roll(){
+                let i = 0;
+                const int_id = setInterval(() => {
+                    if (i >= 12){
+                        clearInterval(int_id);
+                        return;
+                    }
+                    this.innerRoll();
+                    i++;
+                }, 75);                
+            }
+            innerRoll(){
+                this.result = (Math.floor(Math.random()*6)+1);
+                document.getElementById(this.label).src = this.result + ".png";
+            }
+            reset(){
+                this.roll();
+                this.held = false;
+                document.getElementById(this.label.slice(0,4)+"box"+this.label.slice(7)).style["background-color"] = "antiquewhite";
+            }
+        }
+        const die1 = new Die("die_num_1");
+        const die2 = new Die("die_num_2");
+        const die3 = new Die("die_num_3");
+        const die4 = new Die("die_num_4");
+        const die5 = new Die("die_num_5");
+        const Dice = [die1, die2, die3, die4, die5];
+        var score_list = ["One", "Two", "Three", "Four", "Five", "Six", "3_Kind", "4_Kind", "Full_House", "SM_Str", "LG_Str", "Chance", "Yahtzee"];
+        var score = 0;
+        var upper = 0;
+        var lower = 0;
+        var yahtzee_num = 0;
+        var rolls = 0;
+
+        function roll(){
+            for (let d of Dice) {
+                if (rolls == 0){
+                    d.reset()
+                } else {
+                    if (!d.held)
+                        d.roll()
+                }
+            }
+            rolls++;
+            document.getElementById("roll_butt").innerHTML = "Roll " + (rolls)
+            for (let s of score_list)
+                document.getElementById(s).disabled = false;
+            if (rolls >= 3){
+                document.getElementById("roll_butt").disabled = true;
+                for (let h of ["hold1","hold2","hold3","hold4","hold5"]){
+                    document.getElementById(h).disabled = true;
+                }
+            } else if (rolls == 1){
+                for (let h of ["hold1","hold2","hold3","hold4","hold5"]){
+                    document.getElementById(h).disabled = false;
+                }
+            }
+        }
+
+        function score_dice(cat){
+            let num_list = [];
+            for (let d of Dice)
+                num_list.push(d.result);
+            num_list.sort(function(a, b){return a - b});
+            let num_dict = {};
+            for (let i of num_list)
+                num_dict[i] = num_dict[i] ? num_dict[i] + 1 : 1;
+            if (Object.keys(num_dict).length == 1)
+                yahtzee_num++;
+            let subtotal = 0;
+            switch(cat){
+                case "One":
+                    for (let i of num_list){
+                        if (i == 1)
+                            subtotal += 1;
+                    }
+                    upper += subtotal;
+                    break;
+                case "Two":
+                    for (let i of num_list){
+                        if (i == 2)
+                            subtotal += 2;
+                    }
+                    upper += subtotal;
+                    break;
+                case "Three":
+                    for (let i of num_list){
+                        if (i == 3)
+                            subtotal += 3;
+                    }
+                    upper += subtotal;
+                    break;
+                case "Four":
+                    for (let i of num_list){
+                        if (i == 4)
+                            subtotal += 4;
+                    }
+                    upper += subtotal;
+                    break;
+                case "Five":
+                    for (let i of num_list){
+                        if (i == 5)
+                            subtotal += 5;
+                    }
+                    upper += subtotal;
+                    break;
+                case "Six":
+                    for (let i of num_list){
+                        if (i == 6)
+                            subtotal += 6;
+                    }
+                    upper += subtotal;
+                    break;
+                case "3_Kind":
+                    for (let value of Object.values(num_dict)){
+                        if (value >= 3){
+                            for (let i of num_list)
+                                subtotal += i;
+                            break;
+                        }
+                    }
+                    lower += subtotal;
+                    break;
+                case "4_Kind":
+                    for (let value of Object.values(num_dict)){
+                        if (value >= 4){
+                            for (let i of num_list)
+                                subtotal += i;
+                            break;
+                        }
+                    }
+                    lower += subtotal;
+                    break;
+                case "Full_House":
+                    if ((Object.values(num_dict).includes(2) && Object.values(num_dict).includes(3)) || Object.keys(num_dict).length == 1)
+                        subtotal = 25;
+                    lower += subtotal;
+                    break;
+                case "SM_Str":
+                    const num_set = new Set(num_list);
+                    const ar = [new Set([1,2,3,4]),new Set([2,3,4,5]),new Set([3,4,5,6])];
+                    for (let s of ar){
+                        if(s.isSubsetOf(num_set) || Object.keys(num_dict).length == 1)
+                            subtotal = 30;
+                    }
+                    lower += subtotal;
+                    break;
+                case "LG_Str":
+                    if ((num_list.toString() == "1,2,3,4,5" || num_list.toString() == "2,3,4,5,6") || Object.keys(num_dict).length == 1)
+                        subtotal = 40;
+                    lower += subtotal;
+                    break;
+                case "Chance":
+                    for (let i of num_list)
+                        subtotal += i;
+                    lower += subtotal;
+                    break;
+                case "Yahtzee":
+                    if (Object.keys(num_dict).length == 1)
+                        subtotal = 50;
+                    lower += subtotal;
+                    break;
+            }
+
+            score = upper + lower;
+            document.getElementById(cat + "_score").innerHTML = subtotal;
+            document.getElementById("upper_score").innerHTML = "Upper Score: " + upper;
+            document.getElementById("lower_score").innerHTML = "Lower Score: " + lower;
+            let bonus = "Bonus: "
+            if (upper >= 63){
+                bonus += 35;
+                score += 35;
+            } else {
+                bonus += 0
+            }
+            if (yahtzee_num > 1 && document.getElementById("Yahtzee_score").innerHTML == "50"){
+                bonus += " | " + ((yahtzee_num-1)*100);
+                score += (yahtzee_num-1)*100;
+            }
+            document.getElementById("bonus").innerHTML = bonus;
+            document.getElementById("total").innerHTML = "Total: " + score;
+
+            for (let s of score_list)
+                document.getElementById(s).disabled = true;
+            for (let h of ["hold1","hold2","hold3","hold4","hold5"])
+                document.getElementById(h).disabled = true;
+            document.getElementById("roll_butt").disabled = false;
+            document.getElementById("roll_butt").innerHTML = "Roll"
+            score_list.splice(score_list.indexOf(cat),1);
+            rolls = 0;
+            if (score_list.length == 0){
+                end_game()
+            }
+                
+        }
+
+        function end_game() {
+            document.getElementById("roll_butt").disabled = true;
+            document.getElementById("endgame").innerHTML = "Thanks for playing! Refresh to start a new game."
+            /*var lead = yaml.load(fs.readFileSync('leaderboard.yaml','utf-8'));*/
+
+        }
+
+        function diehold(die_box) {
+            if (Dice[die_box.charAt(8)-1].held){
+                Dice[die_box.charAt(8)-1].held = false;
+                document.getElementById(die_box).style.backgroundColor = "antiquewhite";
+            } else {
+                document.getElementById(die_box).style.backgroundColor = "rgb(251, 146, 97)";
+                Dice[die_box.charAt(8)-1].held = true;
+            }
+        }
+    </script>
+    <div class="everything">
+        <img src="yahtzee-wide.png" class="title_img">
+        <div class="shadow">
+    <div class="score_num">
+        <p style="margin:10">
+        <span style="padding:20" id="upper_score">Upper Score: 0</span>
+        <span style="padding:20" id="lower_score">Lower Score: 0</span>
+        <span style="padding:20" id="bonus">Bonus: 0</span>
+        <span style="padding:20" id="total">Total: 0</span>
+        </p>
+    </div>
+    <div class="score_con">
+        <div class="score_side"> 
+            <div class="score_div">
+                <button id="One" class="score_button" onclick='score_dice("One")' disabled>Ace</button>
+                <p id="One_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Two" class="score_button" onclick='score_dice("Two")' disabled>Two</button>
+                <p id="Two_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Three" class="score_button" onclick='score_dice("Three")' disabled>Three</button>
+                <p id="Three_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Four" class="score_button" onclick='score_dice("Four")' disabled>Four</button>
+                <p id="Four_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Five" class="score_button" onclick='score_dice("Five")' disabled>Five</button>
+                <p id="Five_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Six" class="score_button" onclick='score_dice("Six")' disabled>Six</button>
+                <p id="Six_score" class="cat_num">0</p>
+            </div>
+        </div>
+        <span id="endgame" class="endgame"></span>
+        <div class="score_side">
+            <div class="score_div">
+                <button id="3_Kind" class="score_button" onclick='score_dice("3_Kind")' disabled>3 of a Kind</button>
+                <p id="3_Kind_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="4_Kind" class="score_button" onclick='score_dice("4_Kind")' disabled>4 of a Kind</button>
+                <p id="4_Kind_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Full_House" class="score_button" onclick='score_dice("Full_House")' disabled>Full House</button>
+                <p id="Full_House_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="SM_Str" class="score_button" onclick='score_dice("SM_Str")' disabled>Small Straight</button>
+                <p id="SM_Str_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="LG_Str" class="score_button" onclick='score_dice("LG_Str")' disabled>Large Straight</button>
+                <p id="LG_Str_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Chance" class="score_button" onclick='score_dice("Chance")' disabled>Chance</button>
+                <p id="Chance_score" class="cat_num">0</p>
+            </div>
+            <div class="score_div">
+                <button id="Yahtzee" class="score_button" onclick='score_dice("Yahtzee")' disabled>Yahtzee</button>
+                <p id="Yahtzee_score" class="cat_num">0</p>
+            </div>
+        </div>
+    </div>
+    <div class="die_con">
+        <div class="die_num" id="die_box_1">
+            <img id="die_num_1" src="1.png" class="die_img">
+            <button id="hold1" onclick="diehold('die_box_1')" class="hold_butt" disabled>Hold</button>
+        </div>
+        <div class="die_num" id="die_box_2">
+            <img id="die_num_2" src="1.png" class="die_img">
+            <button id="hold2" onclick="diehold('die_box_2')" class="hold_butt" disabled>Hold</button>
+        </div>
+        <div class="die_num" id="die_box_3">
+            <img id="die_num_3" src="1.png" class="die_img">
+            <button id="hold3" onclick="diehold('die_box_3')" class="hold_butt" disabled>Hold</button>
+        </div>
+        <div class="die_num" id="die_box_4">
+            <img id="die_num_4" src="1.png" class="die_img">
+            <button id="hold4" onclick="diehold('die_box_4')" class="hold_butt" disabled>Hold</button>
+        </div>
+        <div class="die_num" id="die_box_5">
+            <img id="die_num_5" src="1.png" class="die_img">
+            <button id="hold5" onclick="diehold('die_box_5')" class="hold_butt" disabled>Hold</button>
+        </div>
+    </div>
+    <div style="background-color: rgb(175, 0, 0); width:600; border-radius: 0px 0px 10px 10px;">
+        <button class="roll_button" id="roll_butt" onclick="roll()">Roll</button>
+    </div>
+        </div>
+    </div>
+</body>
+</html>
